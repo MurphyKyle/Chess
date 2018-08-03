@@ -88,4 +88,19 @@ public interface IChessModel {
     * @param col the column location for the piece to be placed.
     ***************************************************************/
    void set(IChessPiece piece, int row, int col);
+   
+   /****************************************************************
+	 * Sets the Chess Board to set up the game using 960-style rules
+	 * 
+	 * @param isUsing960 the boolean indicating setup style
+	 ***************************************************************/
+	void setUsing960Setup(boolean isUsing960);
+	
+	/****************************************************************
+	 * Tells if the game is set up using the 960 board setup rules
+	 * 
+	 * @return boolean showing if the game is using 960-style rules 
+	 ***************************************************************/
+	boolean using960Setup();
+	
 }

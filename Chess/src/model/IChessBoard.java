@@ -96,4 +96,18 @@ public interface IChessBoard {
     * @return the cloned board
     ***************************************************************/
    IChessPiece[][] clone();
+   
+   /****************************************************************
+	 * Sets the ChessBoard to set up the game using 960-style rules
+	 * 
+	 * @param isUsing960 the boolean indicating setup style
+	 ***************************************************************/
+   void setUsing960Setup(boolean isUsing960) ;
+   
+	/****************************************************************
+	 * Tells if the ChessBoard is set up using the 960-style setup rules
+	 * 
+	 * @return boolean showing if the game is using 960-style rules 
+	 ***************************************************************/
+	boolean using960Setup();	
 }

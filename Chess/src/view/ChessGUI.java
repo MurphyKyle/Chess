@@ -112,6 +112,9 @@ public class ChessGUI implements IChessUI {
 	/** Menu item to change the size of the game. */
 	private JMenuItem sizeItem;
 	
+	/** Menu item to set 960-style rules to the game. */
+	private JCheckBoxMenuItem use960SetupItem;
+	
 	/** The frame containing the entire game. */
 	private JFrame topWindow;
 	
@@ -156,6 +159,9 @@ public class ChessGUI implements IChessUI {
 	
 	/** Tells if the board should highlight valid moves or not. */
 	private boolean highlightValid;
+	
+	/** Tells if the board should use 960 setup or not. */
+	private boolean use960Setup;
 	
 	/** NUmber of rows on the board. */
 	private int numRows;
@@ -288,6 +294,7 @@ public class ChessGUI implements IChessUI {
 		topWindow.setTitle("CIS 350: Chess Game");
 		topWindow.setIconImages(al);
 		topWindow.pack();
+		topWindow.setLocationRelativeTo(null);
 		topWindow.setResizable(false);
 		topWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		topWindow.setVisible(true);
@@ -331,6 +338,10 @@ public class ChessGUI implements IChessUI {
 		validItem.setActionCommand("Valid");
 		validItem.setSelected(true);
 		
+		use960SetupItem = new JCheckBoxMenuItem("Use Chess960 Setup");
+		use960SetupItem.setActionCommand("Use960");
+		use960SetupItem.setSelected(use960Setup);
+		
 		fileMenu.setForeground(Color.WHITE);
 		
 		menuBar.setLayout(new BorderLayout());
@@ -341,6 +352,7 @@ public class ChessGUI implements IChessUI {
 		fileMenu.add(colorItem);
 		fileMenu.add(sizeItem);
 		fileMenu.add(validItem);
+		fileMenu.add(use960SetupItem);
 		
 		menuBar.add(fileMenu, BorderLayout.LINE_START);
 		
@@ -557,6 +569,7 @@ public class ChessGUI implements IChessUI {
 	public final void setResetHandler(final ActionListener rh) {
 		resetItem.addActionListener(rh);
 		sizeItem.addActionListener(rh);
+		use960SetupItem.addActionListener(rh);
 		resetListener = rh;
 	}
 	
@@ -699,6 +712,14 @@ public class ChessGUI implements IChessUI {
 	}
 	
 	/** Listener for the menu items. */
+	@Override
+	public final boolean use960Setup() {
+		return use960Setup;
+	}
+	@Override
+	public final void use960Setup(boolean use960) {
+		use960Setup = use960;
+	}
 	private ActionListener menuListener = new ActionListener() {
 		
 		@Override
@@ -725,7 +746,7 @@ public class ChessGUI implements IChessUI {
 					highlightValid = false;
 				}
 				
-				highlightAll(highlightValid);
+				highlightAll(highlightValid);						
 			}
 		}
 	};

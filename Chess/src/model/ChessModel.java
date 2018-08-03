@@ -321,4 +321,16 @@ public class ChessModel implements IChessModel {
 	public final void set(final IChessPiece p, final int row, final int col) {
 		board.set(p, row, col);
 	}
+
+	@Override	
+	public void setUsing960Setup(boolean isUsing960) {
+		if (this.board != null) { board.setUsing960Setup(isUsing960); }
+	}
+	
+	@Override
+	public boolean using960Setup() {
+		if (board == null) { return false; }
+		return board.using960Setup();
+	}
+
 }

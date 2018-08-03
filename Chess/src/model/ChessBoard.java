@@ -1,8 +1,12 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /********************************************************************
- * CIS 350 - 01
- * Chess
+ * CIS 350 - 01 Chess
  *
  * Chess board that holds all the game pieces.
  *
@@ -14,35 +18,40 @@ package model;
  *******************************************************************/
 public class ChessBoard implements IChessBoard {
 
+	/** Tells if the user is playing using the 960 setup rules. */
+	private static boolean using960Setup = false;
+
 	/** 2d array of ChessPieces to represent the board. */
 	private IChessPiece[][] board;
-	
+
 	/** Tells who's turn it currently is (WHITE or BLACK). */
 	private Player currentPlayer;
-	
+
 	/** Tells how many moves have been made. */
 	private int numMoves;
-	
+
 	/** Location of the white King. */
 	private int[] whiteKing;
-	
+
 	/** Location of the black King. */
 	private int[] blackKing;
-	
+
 	/****************************************************************
-	 * Constructor for ChessBoard.
-	 * Default game has 32 pieces and WHITE goes first.
+	 * Constructor for ChessBoard. Default game has 32 pieces and WHITE goes
+	 * first.
 	 * 
-	 * @param boardSize the size of an edge on the square board (8 default).
-	 * @param placePieces if true, will place game pieces. 
-	 * 			If false, will create an empty game board.
+	 * @param boardSize
+	 *            the size of an edge on the square board (8 default).
+	 * @param placePieces
+	 *            if true, will place game pieces. If false, will create an
+	 *            empty game board.
 	 ***************************************************************/
 	public ChessBoard(final int boardSize, final boolean placePieces) {
 		board = new ChessPiece[boardSize][boardSize];
-		
+
 		whiteKing = new int[2];
 		blackKing = new int[2];
-		
+
 		/* Creates an empty board if placePieces is false */
 		if (!placePieces) {
 			for (int r = 0; r < boardSize; r++) {
@@ -52,35 +61,37 @@ public class ChessBoard implements IChessBoard {
 			}
 		} else {
 			setupBoard();
+			checkUse960Play();
 		}
-		
+
 		currentPlayer = Player.WHITE;
 		numMoves = 0;
 	}
-	
+
 	/****************************************************************
 	 * Copy constructor.
 	 * 
-	 * @param other the ChessBoard to copy.
+	 * @param other
+	 *            the ChessBoard to copy.
 	 ***************************************************************/
 	public ChessBoard(final ChessBoard other) {
 		board = other.clone();
-		
+
 		currentPlayer = other.currentPlayer;
 		numMoves = other.numMoves;
 		whiteKing = other.whiteKing;
 		blackKing = other.blackKing;
 	}
-	
+
 	/****************************************************************
 	 * Places the game pieces into their default locations on the board.
 	 ***************************************************************/
 	private void setupBoard() {
-		
-		/* Rows for the black pieces*/
-		int rowPawns = 1; 
+
+		/* Rows for the black pieces */
+		int rowPawns = 1;
 		int row = 0;
-		
+
 		// Column of the board where the pieces start
 		// (only the pieces to the right of the left-most Bishop)
 		final int queenCol = 3;
@@ -88,9 +99,8 @@ public class ChessBoard implements IChessBoard {
 		final int knightCol = 6;
 		final int rookCol = 7;
 
-		
 		/* Places both black and white pieces */
-		for (Player p : Player.values()) {				
+		for (Player p : Player.values()) {
 			board[row][0] = new Rook(p);
 			board[row][1] = new Knight(p);
 			board[row][2] = new Bishop(p);
@@ -99,17 +109,17 @@ public class ChessBoard implements IChessBoard {
 			board[row][bishopCol] = new Bishop(p);
 			board[row][knightCol] = new Knight(p);
 			board[row][rookCol] = new Rook(p);
-			
+
 			/* Places pawns */
 			for (int col = 0; col < numColumns(); col++) {
 				board[rowPawns][col] = new Pawn(p);
 			}
-			
+
 			// Records Kings location
-			int[] loc = {row, King.KING_STARTING_COL};
+			int[] loc = { row, King.KING_STARTING_COL };
 			setKing(p, loc);
-			
-			row = numRows() - 1; 
+
+			row = numRows() - 1;
 			rowPawns = row - 1;
 		}
 
@@ -121,7 +131,7 @@ public class ChessBoard implements IChessBoard {
 			}
 		}
 	}
-	
+
 	@Override
 	public final int numRows() {
 		return board.length;
@@ -139,78 +149,87 @@ public class ChessBoard implements IChessBoard {
 
 	@Override
 	public final void move(final Move move) {
-		
-		/* Moves piece at the from location to the to location
-		 * Sets from location to null. */
-		IChessPiece movingPiece = pieceAt(move.fromRow(), 
-				move.fromColumn());
+
+		/*
+		 * Moves piece at the from location to the to location Sets from
+		 * location to null.
+		 */
+		IChessPiece movingPiece = pieceAt(move.fromRow(), move.fromColumn());
 		// Checks for and handles an en Passant and Casteling
 		handleEnPassant(movingPiece, move);
 		handleCastle(movingPiece, move);
 		unset(move.fromRow(), move.fromColumn());
 		set(movingPiece, move.toRow(), move.toColumn());
-		
+
 		// Switches turns
 		currentPlayer = currentPlayer.next();
-		
+
 		/* If the piece being moved is a king, the location is recorded */
 		if (movingPiece != null && movingPiece.is("King")) {
 			updateKingLocation(move.toRow(), move.toColumn());
 		}
-		
+
 		/* Increments the number of moves that have been made */
 		numMoves++;
 	}
-	
+
 	/****************************************************************
-	 * If a piece performs enPassant, it will remove the piece
-	 * that was attacked from the board.
+	 * If a piece performs enPassant, it will remove the piece that was attacked
+	 * from the board.
 	 * 
-	 * @param movingPiece the Piece that is moving
-	 * @param move the move being attempted 
+	 * @param movingPiece
+	 *            the Piece that is moving
+	 * @param move
+	 *            the move being attempted
 	 ***************************************************************/
-	private void handleEnPassant(final IChessPiece movingPiece,
-			final Move move) {
-		
-		if (movingPiece == null) { return; }
-		
-		if (!movingPiece.is("Pawn")) { return; }
-		
+	private void handleEnPassant(final IChessPiece movingPiece, final Move move) {
+
+		if (movingPiece == null) {
+			return;
+		}
+
+		if (!movingPiece.is("Pawn")) {
+			return;
+		}
+
 		Pawn p = (Pawn) movingPiece;
-		
+
 		/* Removes attacked pawn from the board */
-		if (pieceAt(move.toRow(), move.toColumn()) == null 
-				&& 
-				p.isAttacking(move, this)) { 
+		if (pieceAt(move.toRow(), move.toColumn()) == null && p.isAttacking(move, this)) {
 			unset(move.fromRow(), move.toColumn());
 		}
 	}
-	
+
 	/****************************************************************
-	 * If a piece performs a Castle, it will remove the piece
-	 * that was attacked from the board.
+	 * If a piece performs a Castle, it will remove the piece that was attacked
+	 * from the board.
 	 * 
-	 * @param movingPiece the Piece that is moving.
-	 * @param m the move being attempted.
+	 * @param movingPiece
+	 *            the Piece that is moving.
+	 * @param m
+	 *            the move being attempted.
 	 ***************************************************************/
 	private void handleCastle(final IChessPiece movingPiece, final Move m) {
-		
-		if (movingPiece == null || !movingPiece.is("King")) { return; }
-		
-		
+
+		if (movingPiece == null || !movingPiece.is("King")) {
+			return;
+		}
+
 		int distance = m.toColumn() - m.fromColumn();
 		int direction = distance > 0 ? 1 : -1;
-		
-		if (distance * direction != 2) { return; }
+
+		if (distance * direction != 2) {
+			return;
+		}
 
 		int rookColumn = 0;
-		
+
 		if (direction == 1) {
 			rookColumn = numColumns() - 1;
-		} 
+		}
 
 		Rook rook = (Rook) pieceAt(m.fromRow(), rookColumn);
-		
+
 		unset(m.fromRow(), rookColumn);
 		set(rook, m.fromRow(), m.fromColumn() + direction);
 
@@ -219,11 +238,13 @@ public class ChessBoard implements IChessBoard {
 	/****************************************************************
 	 * Updates the arrays keeping track of each king's location.
 	 * 
-	 * @param row row coordinate of the piece
-	 * @param col column coordinate of the piece
+	 * @param row
+	 *            row coordinate of the piece
+	 * @param col
+	 *            column coordinate of the piece
 	 ***************************************************************/
 	private void updateKingLocation(final int row, final int col) {
-		
+
 		/* Checks which player owns the piece */
 		if (pieceAt(row, col).player() == Player.WHITE) {
 			whiteKing[0] = row;
@@ -235,8 +256,7 @@ public class ChessBoard implements IChessBoard {
 	}
 
 	@Override
-	public final void set(final IChessPiece piece, final int row,
-			final int column) {
+	public final void set(final IChessPiece piece, final int row, final int column) {
 		board[row][column] = piece;
 	}
 
@@ -244,7 +264,7 @@ public class ChessBoard implements IChessBoard {
 	public final void unset(final int row, final int column) {
 		board[row][column] = null;
 	}
-	
+
 	@Override
 	public final int[] findKing(final Player p) {
 		if (p == Player.WHITE) {
@@ -253,12 +273,14 @@ public class ChessBoard implements IChessBoard {
 			return blackKing;
 		}
 	}
-	
+
 	/****************************************************************
 	 * Sets the location of the given king.
 	 * 
-	 * @param p the player who owns the King.
-	 * @param location the location of the given king.
+	 * @param p
+	 *            the player who owns the King.
+	 * @param location
+	 *            the location of the given king.
 	 ***************************************************************/
 	private void setKing(final Player p, final int[] location) {
 		if (p == Player.WHITE) {
@@ -267,51 +289,55 @@ public class ChessBoard implements IChessBoard {
 			blackKing = location;
 		}
 	}
-	
+
 	@Override
 	public final int getNumMoves() {
 		return numMoves;
 	}
-	
+
 	@Override
 	public final Player getCurrentPlayer() {
 		return currentPlayer;
 	}
-	
+
 	@Override
 	public final IChessPiece[][] clone() {
 		IChessPiece[][] b = new ChessPiece[numRows()][numColumns()];
-		
+
 		for (int r = 0; r < numRows(); r++) {
 			for (int c = 0; c < numColumns(); c++) {
-				
+
 				assignProperPiece(b, r, c);
 			}
 		}
 		return b;
 	}
-	
+
 	/****************************************************************
-	 * Places whatever piece was found on this board at the given 
-	 * location on a given board.
+	 * Places whatever piece was found on this board at the given location on a
+	 * given board.
 	 * 
-	 * This helper is used to replace the switch statement that was
-	 * originally used in the clone method. The reason being, EclEmma
-	 * doesn't properly cover switch statements. 
+	 * This helper is used to replace the switch statement that was originally
+	 * used in the clone method. The reason being, EclEmma doesn't properly
+	 * cover switch statements.
 	 * 
-	 * @param b the given board to have pieces placed on.
-	 * @param r the row location of the piece.
-	 * @param c the column location of the piece.
+	 * @param b
+	 *            the given board to have pieces placed on.
+	 * @param r
+	 *            the row location of the piece.
+	 * @param c
+	 *            the column location of the piece.
 	 ***************************************************************/
-	private void assignProperPiece(final IChessPiece[][] b, final int r,
-			final int c) {
+	private void assignProperPiece(final IChessPiece[][] b, final int r, final int c) {
 		IChessPiece p = pieceAt(r, c);
-		
-		if (p == null) { return; }
-		
+
+		if (p == null) {
+			return;
+		}
+
 		Player plr = p.player();
 		String type = p.type();
-		
+
 		if (type.equals("Pawn")) {
 			b[r][c] = ((Pawn) p).clone();
 		}
@@ -335,8 +361,95 @@ public class ChessBoard implements IChessBoard {
 		/* The king also records the location of the kings */
 		if (type.equals("King")) {
 			b[r][c] = ((King) p).clone();
-			int [] location = {r, c};
+			int[] location = { r, c };
 			setKing(plr, location);
 		}
+	}
+
+	@Override
+	public void setUsing960Setup(boolean isUsing960) {
+		using960Setup = isUsing960;
+	}
+
+	@Override
+	public boolean using960Setup() {
+		return using960Setup;
+	}
+
+	public String checkUse960Play() {
+		String str = "";
+		
+		if (using960Setup) {
+			// randomize the outer row
+			// black then white
+			boolean complete = false;
+			List<IChessPiece> blackPieces = Arrays.asList(board[0]);
+			IChessPiece theKing = blackPieces.get(King.KING_STARTING_COL);
+
+			// rooks at positions 0 && 7
+			IChessPiece rook1 = blackPieces.get(0);
+			IChessPiece rook2 = blackPieces.get(7);
+			// bishops at positions 2 && 5
+			IChessPiece bishop1 = blackPieces.get(2);
+			IChessPiece bishop2 = blackPieces.get(5);
+
+			do {
+				// rook, knight, bishop, queen, king, bishop, knight, rook
+				Collections.shuffle(blackPieces);
+				int kingIndex = blackPieces.indexOf(theKing);
+
+				// check for valid king placement (i1-i6 on a size 8 board)
+				if (kingIndex >= 1 && kingIndex <= 6) {
+					int rook1Index = blackPieces.indexOf(rook1);
+					int rook2Index = blackPieces.indexOf(rook2);
+					boolean rook1IsLeft = rook1Index < kingIndex;
+					boolean rook2IsLeft = rook2Index < kingIndex;
+
+					// check for valid castle placement (one on each side of
+					// king)
+					if (rook1IsLeft != rook2IsLeft) {
+						// check for valid bishop placement (on opposite board
+						// piece colors odd/even indicies)
+						int bishop1ModResult = blackPieces.indexOf(bishop1) % 2;
+						int bishop2ModResult = blackPieces.indexOf(bishop2) % 2;
+
+						if (bishop1ModResult != bishop2ModResult) {
+							complete = true;
+						}
+					}
+				}
+			} while (!complete);
+
+
+			for (int k = 0; k < blackPieces.size(); k++) {
+				String type = blackPieces.get(k).type();
+				IChessPiece wtPce = null;
+
+				switch (type) {
+				case "Rook":
+					wtPce = new Rook(Player.WHITE);
+					break;
+				case "Knight":
+					wtPce = new Knight(Player.WHITE);
+					break;
+				case "Bishop":
+					wtPce = new Bishop(Player.WHITE);
+					break;
+				case "Queen":
+					wtPce = new Queen(Player.WHITE);
+					break;
+				case "King":
+					wtPce = new King(Player.WHITE);
+					break;
+				default:
+					throw new IllegalArgumentException();
+				}
+				
+				str += wtPce.type();
+				board[board.length - 1][k] = wtPce;
+			}			
+		}
+		
+		return str;
 	}
 }

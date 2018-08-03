@@ -217,7 +217,7 @@ public class Presenter {
 		
 		@Override
 		public void actionPerformed(final ActionEvent e) {
-			String source = e.getActionCommand();
+			String source = e.getActionCommand();		
 			
 			if (source.equals("Size")) {
 				String message = "This will reset the board. Continue?";
@@ -229,6 +229,23 @@ public class Presenter {
 				
 				if (answer == JOptionPane.YES_OPTION) {
 					view.changeBoardSize();
+					reset();
+				}
+				return;
+			}
+
+			if (source.equals("Use960")) {
+				String message = "This will reset the board. Continue?";
+				String title = "Reset?";
+				
+				int answer = JOptionPane.showConfirmDialog(null, message, title,
+						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+						null);
+				
+				if (answer == JOptionPane.YES_OPTION) {
+					boolean use960 = !model.using960Setup();
+					model.setUsing960Setup(use960);
+					view.use960Setup(use960);
 					reset();
 				}
 				return;
