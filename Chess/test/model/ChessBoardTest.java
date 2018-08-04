@@ -3,14 +3,17 @@ package model;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import org.junit.Before;
 import org.junit.Test;
 
+import javafx.scene.layout.ConstraintsBase;
 
 public class ChessBoardTest {
 
@@ -139,32 +142,40 @@ public class ChessBoardTest {
 
 	@Test
 	public final void test960Creation() throws Exception {
-		makeBoard();
-		full.setUsing960Setup(true);
-		full = new ChessBoard(8, true);
+		makeBoard(); // normal board just to be SURE
+		full.setUsing960Setup(true); // set 960
+		full = new ChessBoard(8, true); // creates 960
 		ArrayList<String> creations = new ArrayList<>();
-
+		
 		while (creations.size() < 960) {
 			// get a new shuffle
-			String res = ((ChessBoard) full).checkUse960Play();
+			full = new ChessBoard(8, true); // creates new 960
+			String res = ((ChessBoard) full).checkUse960Play(); // re-shuffles a 960? flaw!!
 
 			boolean resExists = false;
-			
+
 			// for each list in my collection
 			for (String lst : creations) {
 				if (lst.equals(res)) {
 					// if the list already has the objects in res
 					resExists = true;
 					break;
-				}				
+				}
 			}
-			
+
 			if (!resExists) {
 				creations.add(res);
 			}
 			
 		} // end while, should have 960 total
 		Collections.sort(creations);
-		assertEquals(960, creations.size());		
+		//assertEquals(960, creations.size());
+		switch (creations.size()) {
+		case 960:
+			assertTrue(true);
+			break;
+		default:
+			assertTrue(false);
+		}
 	}
 }

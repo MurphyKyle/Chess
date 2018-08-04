@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.print.attribute.standard.RequestingUserName;
+
 /********************************************************************
  * CIS 350 - 01 Chess
  *
@@ -378,78 +380,94 @@ public class ChessBoard implements IChessBoard {
 
 	public String checkUse960Play() {
 		String str = "";
-		
+
 		if (using960Setup) {
-			// randomize the outer row
-			// black then white
 			boolean complete = false;
 			List<IChessPiece> blackPieces = Arrays.asList(board[0]);
-			IChessPiece theKing = blackPieces.get(King.KING_STARTING_COL);
-
-			// rooks at positions 0 && 7
-			IChessPiece rook1 = blackPieces.get(0);
-			IChessPiece rook2 = blackPieces.get(7);
-			// bishops at positions 2 && 5
-			IChessPiece bishop1 = blackPieces.get(2);
-			IChessPiece bishop2 = blackPieces.get(5);
+			IChessPiece theKing = getPieceType(blackPieces, "King")[0];
+			IChessPiece rook1 = getPieceType(blackPieces, "Rook")[0];
+			IChessPiece rook2 = getPieceType(blackPieces, "Rook")[1];
+			IChessPiece bishop1 = getPieceType(blackPieces, "Bishop")[0];
+			IChessPiece bishop2 = getPieceType(blackPieces, "Bishop")[1];
 
 			do {
-				// rook, knight, bishop, queen, king, bishop, knight, rook
+				// randomize the outer row
 				Collections.shuffle(blackPieces);
 				int kingIndex = blackPieces.indexOf(theKing);
 
 				// check for valid king placement (i1-i6 on a size 8 board)
 				if (kingIndex >= 1 && kingIndex <= 6) {
-					int rook1Index = blackPieces.indexOf(rook1);
-					int rook2Index = blackPieces.indexOf(rook2);
-					boolean rook1IsLeft = rook1Index < kingIndex;
-					boolean rook2IsLeft = rook2Index < kingIndex;
+					boolean rook1IsLeft = blackPieces.indexOf(rook1) < kingIndex;
+					boolean rook2IsLeft = blackPieces.indexOf(rook2) < kingIndex;
 
-					// check for valid castle placement (one on each side of
-					// king)
+					// check for valid castle placement (one on each side of king)
 					if (rook1IsLeft != rook2IsLeft) {
-						// check for valid bishop placement (on opposite board
-						// piece colors odd/even indicies)
+						// check for valid bishop placement (on opposite board piece colors odd/even indices)
 						int bishop1ModResult = blackPieces.indexOf(bishop1) % 2;
 						int bishop2ModResult = blackPieces.indexOf(bishop2) % 2;
 
 						if (bishop1ModResult != bishop2ModResult) {
 							complete = true;
+							str = copyIndicesToWhite(blackPieces);
 						}
 					}
 				}
 			} while (!complete);
-
-
-			for (int k = 0; k < blackPieces.size(); k++) {
-				String type = blackPieces.get(k).type();
-				IChessPiece wtPce = null;
-
-				switch (type) {
-				case "Rook":
-					wtPce = new Rook(Player.WHITE);
-					break;
-				case "Knight":
-					wtPce = new Knight(Player.WHITE);
-					break;
-				case "Bishop":
-					wtPce = new Bishop(Player.WHITE);
-					break;
-				case "Queen":
-					wtPce = new Queen(Player.WHITE);
-					break;
-				case "King":
-					wtPce = new King(Player.WHITE);
-					break;
-				default:
-					throw new IllegalArgumentException();
-				}
-				
-				str += wtPce.type();
-				board[board.length - 1][k] = wtPce;
-			}			
 		}
-		
+
 		return str;
+	}
+
+	private final String copyIndicesToWhite(final List<IChessPiece> blackPieces) {
+		String str = "";
+
+		for (int k = 0; k < blackPieces.size(); k++) {
+			String type = blackPieces.get(k).type();
+			IChessPiece wtPce = null;
+
+			switch (type) {
+			case "Rook":
+				wtPce = new Rook(Player.WHITE);
+				break;
+			case "Knight":
+				wtPce = new Knight(Player.WHITE);
+				break;
+			case "Bishop":
+				wtPce = new Bishop(Player.WHITE);
+				break;
+			case "Queen":
+				wtPce = new Queen(Player.WHITE);
+				break;
+			case "King":
+				if (k == 0 || k == 7) {
+					throw new IllegalArgumentException("!!! king is placed at an inappropriate spot !!!");
+				}
+				wtPce = new King(Player.WHITE);
+				break;
+			default:
+				throw new IllegalArgumentException();
+			}
+
+			str += wtPce.type();
+			board[board.length - 1][k] = wtPce;
+		}
+
+		return str;
+	}
+
+	private final IChessPiece[] getPieceType(final List<IChessPiece> pieces, String typeString) {
+		ArrayList<IChessPiece> list = new ArrayList<>();
+
+		if (pieces != null) {
+			for (IChessPiece piece : pieces) {
+				if (piece.type().equals(typeString)) {
+					list.add(piece);
+				}
+			} // end loop
+
+			return list.toArray(new IChessPiece[list.size()]);
+		}
+
+		return null; // return null if they gave a null list
 	}
 }
